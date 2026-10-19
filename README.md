@@ -204,9 +204,11 @@ Each board is a folder under `firmware/src/boards/` plus a PlatformIO env, and [
 The Mac app is a SwiftPM package in `mac/`:
 
 ```sh
-mac/build.sh                    # builds and signs mac/build/Claudio.app; --dmg also packages it
+mac/build.sh                    # builds and signs mac/build/Claudio Dev.app; --dmg also packages it
 swift test --package-path mac
 ```
+
+A local build is Claudio Dev, with its own bundle id and settings, so it runs next to the Claudio from Homebrew. Only a build signed with a Developer ID (`SIGN_IDENTITY`) comes out as Claudio.
 
 `Claudio --render out.png` draws the panel with made-up data, `--welcome` opens the welcome guide on its own, and `--dump ss` prints a message the way the app builds it.
 

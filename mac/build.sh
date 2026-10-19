@@ -1,17 +1,22 @@
 #!/bin/sh
-# Builds mac/build/Claudio.app, plus mac/build/Claudio.dmg with --dmg. The version
+# Builds the app in mac/build, plus mac/build/Claudio.dmg with --dmg. The version
 # comes from version.txt.
-# SIGN_IDENTITY signs for distribution (Developer ID, hardened runtime), and
-# NOTARY_KEY_ID, NOTARY_ISSUER_ID and NOTARY_KEY_P8 add notarization.
-# Otherwise it signs with SIGN_ID or the first valid "Apple Development"
-# certificate, because macOS ties the Bluetooth permission to the signature
-# and asks again whenever it changes. With no identity it signs ad hoc.
+# SIGN_IDENTITY signs for distribution (Developer ID, hardened runtime) and
+# builds Claudio.app. NOTARY_KEY_ID, NOTARY_ISSUER_ID and NOTARY_KEY_P8 add
+# notarization.
+# Any other build is Claudio Dev.app, with its own bundle id, settings and
+# Bluetooth grant, so it runs next to the installed Claudio. It signs with
+# SIGN_ID or the first valid "Apple Development" certificate, because macOS
+# ties the Bluetooth permission to the signature and asks again whenever it
+# changes. With no identity it signs ad hoc.
 set -e
 : "${SIGN_ID:=$(security find-identity -v -p codesigning \
   | awk '/Apple Development/ && !/REVOKED/ { print $2; exit }')}"
 cd "$(dirname "$0")"
 swift build -c release --product Claudio
-app=build/Claudio.app
+name=Claudio
+[ -n "$SIGN_IDENTITY" ] || name="Claudio Dev"
+app="build/$name.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$(swift build -c release --show-bin-path)/Claudio" "$app/Contents/MacOS/"
@@ -27,6 +32,10 @@ cp Info.plist "$app/Contents/"
 version=$(cat ../version.txt)
 plutil -replace CFBundleShortVersionString -string "$version" "$app/Contents/Info.plist"
 plutil -replace CFBundleVersion -string "$version" "$app/Contents/Info.plist"
+if [ -z "$SIGN_IDENTITY" ]; then
+  plutil -replace CFBundleIdentifier -string dev.eduardoborges.claudio.dev "$app/Contents/Info.plist"
+  plutil -replace CFBundleName -string "$name" "$app/Contents/Info.plist"
+fi
 
 if [ -n "$SIGN_IDENTITY" ]; then
   codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$app"

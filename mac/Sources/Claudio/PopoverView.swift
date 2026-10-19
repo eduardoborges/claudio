@@ -41,7 +41,7 @@ struct PopoverView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("Claudio").font(.headline)
+            Text(appName).font(.headline)
             Text(connected ? "Display connected" : linkStatus).font(.caption)
                 .foregroundStyle(connected ? Color.secondary : Theme.accent)
             Spacer()
