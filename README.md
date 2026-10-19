@@ -11,7 +11,7 @@
 
 ---
 
-**[Quick start](#quick-start)** · **[What it shows](#what-it-shows)** · **[Settings](#settings)** · **[Linux and Windows](#linux-and-windows)** · **[How it works](#how-it-works)** · **[Development](#development)**
+**[Site](https://claudio.eduardoborges.dev)** · **[Quick start](#quick-start)** · **[What it shows](#what-it-shows)** · **[Settings](#settings)** · **[Linux and Windows](#linux-and-windows)** · **[How it works](#how-it-works)** · **[Development](#development)**
 
 | Sessions | Usage | Today | Stats |
 | :-: | :-: | :-: | :-: |
