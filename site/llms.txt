@@ -1,0 +1,18 @@
+# Claudio
+
+Claudio is a desk display for Claude Code: a small AMOLED (Waveshare
+ESP32-S3-Touch-AMOLED-2.16) next to the keyboard, fed over Bluetooth by a
+macOS menu bar app.
+
+- Sessions: one row per open Claude Code session with project, title, git branch and current activity; sessions waiting for input go on top
+- Usage: the 5-hour and weekly limits and when each resets
+- Today: messages per hour, prompts, tool calls, tokens and the busiest project
+- Stats: a 26-week heatmap with streaks and favorite model, from Claude Code's stats cache
+- Alerts: Clawd walks on screen when Claude Code asks a question or wants a permission, and celebrates long tasks
+- Buttons send Space (push to talk) and Shift+Tab (mode toggle) as a Bluetooth keyboard
+- The Mac app flashes the firmware, pairs the display and installs the Claude Code hooks
+- Linux runs a bash daemon; Windows shows usage only
+
+Requirements: macOS 14 or later on Apple silicon, Claude Code on a paid plan.
+Install: `brew install --cask eduardoborges/tap/claudio`.
+Source: https://github.com/eduardoborges/claudio. Site: https://claudio.eduardoborges.dev
