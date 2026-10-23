@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/eduardoborges/claudio/compare/v0.3.0...v0.4.0) (2026-10-23)
+
+
+### Features
+
+* **daemon:** send the name of the task that just finished ([66a5565](https://github.com/eduardoborges/claudio/commit/66a55654518b4683d72b8a50a28f5f705b33d45f))
+* **ui:** check the sessions that finished in the last minute ([28a2a52](https://github.com/eduardoborges/claudio/commit/28a2a5267f89f37311d524d86d5e858c2c62f52a))
+* **ui:** show the finished task under the dancing Clawd ([f0ede53](https://github.com/eduardoborges/claudio/commit/f0ede5388cd9febebbccd080292a62f6d24c2b54))
+
+
+### Bug Fixes
+
+* **daemon:** count a finished session's minutes from when it finished ([2c4cfdf](https://github.com/eduardoborges/claudio/commit/2c4cfdf40da98ebd5b407788962d17374741965f))
+
 ## [0.3.0](https://github.com/eduardoborges/claudio/compare/v0.2.0...v0.3.0) (2026-10-16)
 
 
