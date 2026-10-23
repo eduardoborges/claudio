@@ -12,8 +12,9 @@ tools/gen_fonts.sh
 
 The script holds the list of sizes and cuts. The Display cut covers 28px and
 up, the Text cut everything below, and badges use Text Semibold. `font_sans_28`
-and `font_sans_16` also carry the status-line spinner glyphs, taken from
-`assets/fonts/DejaVuSansMono.ttf` so every frame has the same width.
+and `font_sans_16` also carry the status-line spinner glyphs and the check mark
+for a finished task, taken from `assets/fonts/DejaVuSansMono.ttf` so every
+spinner frame has the same width.
 
 `lv_font_conv` 1.5.3 writes LVGL 8 descriptors, so the script rewrites each
 file for LVGL 9: it drops the version guards and the `.cache` field, and adds

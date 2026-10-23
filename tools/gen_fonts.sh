@@ -8,8 +8,9 @@ FONTS=assets/fonts/anthropic-sans
 OUT=firmware/src
 ASCII=0x20-0x7E,0x2026
 # Spinner glyphs for the status line, from DejaVu Sans Mono so every frame has
-# the same width and the text next to it doesn't shift.
-SPIN=0xB7,0x2722,0x2733,0x2736,0x273B,0x273D
+# the same width and the text next to it doesn't shift. The check mark for a
+# finished task comes from there too.
+SPIN=0xB7,0x2714,0x2722,0x2733,0x2736,0x273B,0x273D
 
 # name  size  cut  weight  spinner
 FONT_LIST="
