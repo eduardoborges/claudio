@@ -87,10 +87,11 @@ def test_long_task_finishing_is_announced_once(tmp_path):
     cfg = tmp_path / "config"
     sessions = tmp_path / "s"
     sessions.mkdir()
-    write_full(sessions, "long", now, e="stop", st=now - 400, fin=now - 10)
+    write_full(sessions, "long", now, e="stop", ti="Fix the touch axis", st=now - 400, fin=now - 10)
     write_full(sessions, "short", now, e="stop", st=now - 100, fin=now - 5)
     msg = sessions_message(sessions, now, cfg)
     assert msg["dn"] == int(now - 10) and "b" not in msg
+    assert msg["dt"] == "p | Fix the touch axis"
     cfg.write_text("beep = on\n")
     assert sessions_message(sessions, now, cfg)["b"] == 1
     assert "dn" not in sessions_message(sessions, now + DONE_FRESH, cfg)

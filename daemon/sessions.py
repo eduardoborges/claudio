@@ -88,13 +88,14 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
     branch "" outside git. A session counts as working while its subagents run,
     and the row says how many. Deletes files older than MAX_AGE. Adds "a" (what
     the newest working session is doing), "dn" (when a long task just finished,
-    plus "b" to beep) and "n" (all open sessions, when some are left out)."""
+    plus "dt" with its row's name and "b" to beep) and "n" (all open sessions,
+    when some are left out)."""
     now = time.time() if now is None else now
     done_after = _setting("done_after", config)
     done_after = int(done_after) if done_after.isdigit() else DONE_AFTER
     rows = []
     active = None   # (mtime, tool) of the newest working session
-    done = None     # mtime of the newest long task that just finished
+    done = None     # (finish time, row name) of the newest long task that just finished
     for f in path.glob("[!.]*"):
         try:
             mtime = f.stat().st_mtime
@@ -134,15 +135,16 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
             active = (last, str(d.get("t") or ""))
         if (state == "d" and done_after and isinstance(start, (int, float))
                 and isinstance(fin, (int, float)) and now - fin < DONE_FRESH
-                and fin - start >= done_after * 60 and (not done or fin > done)):
-            done = fin
+                and fin - start >= done_after * 60 and (not done or fin > done[0])):
+            done = (fin, name)
     rows.sort(key=lambda r: ("awd".index(r[0]), -r[1]))
     msg = {"k": "ss", "v": [[p, s, int(max(0, now - since) // 60), doing, br]
                             for s, _, p, since, doing, br in rows[:ROWS]]}
     if active:
         msg["a"] = _activity(active[1])
     if done:
-        msg["dn"] = int(done)
+        msg["dn"] = int(done[0])
+        msg["dt"] = done[1]
         if _setting("beep", config) == "on":
             msg["b"] = 1
     # Long titles can overflow the device's buffer. The last rows go first;

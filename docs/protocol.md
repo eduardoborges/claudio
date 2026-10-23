@@ -28,7 +28,7 @@ Messages with `k` feed the other workspaces:
 
 | Kind | Fields |
 | --- | --- |
-| `ss` | Sessions. Each row is `[project \| title, state, minutes, doing, branch]`, with state `a` (needs you), `w` (working) or `d` (done). `n` counts every open session when some rows were left out to fit the 511 bytes. `a` names the corner Clawd's animation (`laptop`, `magnifier` or `cloud`). `dn` is the time a long task finished, which the device celebrates once, with a beep when `b` is set |
+| `ss` | Sessions. Each row is `[project \| title, state, minutes, doing, branch]`, with state `a` (needs you), `w` (working) or `d` (done). `n` counts every open session when some rows were left out to fit the 511 bytes. `a` names the corner Clawd's animation (`laptop`, `magnifier` or `cloud`). `dn` is the time a long task finished, which the device celebrates once, with a beep when `b` is set. `dt` is that task's row name, shown under Clawd while he dances |
 | `td` | Today. `h` is messages per hour as 24 digits from 0 to 8, relative to the busiest hour, and `v` six label and value pairs |
 | `hm` | The heatmap. Week columns from the oldest Sunday, `n` valid days, `h` levels 0 to 4 packed two days per character (`'A' + 5 * first + second`), `mo` month labels by column |
 | `st` | Stats. Up to six label and value pairs, already formatted |

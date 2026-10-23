@@ -81,6 +81,7 @@ public enum Sessions {
         public var sessions: [Session] = []
         public var activity: String?   // laptop, magnifier or cloud
         public var doneAt: Double?     // finish time of a long task, for a celebration
+        public var doneTask: String?   // that task's row name, shown during the celebration
     }
 
     /// Reads the hook's files: sessions that need you first, then working, then
@@ -125,6 +126,7 @@ public enum Sessions {
             if state == "d", doneAfter > 0, let start, let fin, now - fin < doneFresh,
                fin - start >= Double(doneAfter * 60), snap.doneAt == nil || fin > snap.doneAt! {
                 snap.doneAt = fin
+                snap.doneTask = rowName(snap.sessions.last!)
             }
         }
         snap.sessions.sort { a, b in
@@ -135,23 +137,29 @@ public enum Sessions {
         return snap
     }
 
+    /// "project | title" in ASCII, as a row on the device shows it.
+    static func rowName(_ s: Session) -> String {
+        var name = ascii(s.project.isEmpty ? "?" : s.project, 12)
+        let title = ascii(s.title, 32)
+        if !title.isEmpty {
+            name = "\(name) | \(title)"
+            if name.count > 32 { name = name.prefix(29) + "..." }   // about what a row shows
+        }
+        return name
+    }
+
     /// `{"k":"ss","v":[["project | title", state, minutes, doing, branch], ...]}`
     /// for the device: ASCII, at most `rows` rows and `maxBytes` bytes. See
-    /// sessions.py for the optional "a", "dn", "b" and "n".
+    /// sessions.py for the optional "a", "dn", "dt", "b" and "n".
     public static func message(from snap: Snapshot, config: Config = Config()) -> JSON {
         var v: [JSON] = snap.sessions.prefix(rows).map { s in
-            var name = ascii(s.project.isEmpty ? "?" : s.project, 12)
-            let title = ascii(s.title, 32)
-            if !title.isEmpty {
-                name = "\(name) | \(title)"
-                if name.count > 32 { name = name.prefix(29) + "..." }   // about what a row shows
-            }
-            return .array([.string(name), .string(s.state), .int(s.minutes), .string(s.doing), .string(ascii(s.branch, 24))])
+            .array([.string(rowName(s)), .string(s.state), .int(s.minutes), .string(s.doing), .string(ascii(s.branch, 24))])
         }
         var tail: [(String, JSON)] = []
         if let a = snap.activity { tail.append(("a", .string(a))) }
         if let done = snap.doneAt {
             tail.append(("dn", .int(Int(done))))
+            if let task = snap.doneTask { tail.append(("dt", .string(task))) }
             if config.value("beep") == "on" { tail.append(("b", .int(1))) }
         }
         // Long titles can overflow the device's buffer. The last rows go first;

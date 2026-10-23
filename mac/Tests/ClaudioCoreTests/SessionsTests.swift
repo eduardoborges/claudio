@@ -99,10 +99,11 @@ private func sessionsDir() -> URL {
 
 @Test func longTaskFinishingIsAnnouncedOnce() {
     let dir = sessionsDir(), s = dir.appending(path: "s")
-    write(s, "long", now, ["e": "stop", "st": now - 400, "fin": now - 10])
+    write(s, "long", now, ["e": "stop", "ti": "Fix the touch axis", "st": now - 400, "fin": now - 10])
     write(s, "short", now, ["e": "stop", "st": now - 100, "fin": now - 5])
     let msg = message(dir)
     #expect(msg["dn"] as? Int == Int(now - 10) && msg["b"] == nil)
+    #expect(msg["dt"] as? String == "p | Fix the touch axis")
     #expect(message(dir, config: "beep = on\n")["b"] as? Int == 1)
     #expect(message(dir, now + Sessions.doneFresh)["dn"] == nil)
     #expect(message(dir, config: "done_after = 10\n")["dn"] == nil)
