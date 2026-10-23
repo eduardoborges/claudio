@@ -20,7 +20,7 @@ it in sync when a token changes.
 | `THEME_DIM` | `#B0AEA5` | secondary text | reset times, labels, finished sessions |
 | `THEME_ACCENT` | `#D97757` | primary | bars, status line, heatmap, sessions that need you |
 | `THEME_ALERT` | `#C6613F` | earth accent | a bar at 80% or more, "Over pace" |
-| `THEME_SAGE` | `#788C5D` | sage accent | the check under the dancing Clawd |
+| `THEME_SAGE` | `#788C5D` | sage accent | the check on sessions that finished in the last minute, and under the dancing Clawd |
 | `THEME_BADGE` | `#E3DACC` | secondary | badge fill ("Current", "Weekly", the plan) |
 | `THEME_ON_BADGE` | `#141413` | neutral 0 | badge text |
 | `THEME_LINE` | `#343431` | neutral dark at 34% | bar tracks, card borders, dividers, empty heatmap cells |

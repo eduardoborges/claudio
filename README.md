@@ -48,7 +48,7 @@ The app logs to `~/Library/Logs/Claudio.log`.
 
 The display starts on Sessions. Swipe sideways or tap the left button to move between the four workspaces, and tap the screen to flip to the splash and back.
 
-**Sessions.** One row per open Claude Code session: the project folder and title (Claude Code's, or yours after `/rename`), how long it has been working or how long ago it finished, the git branch, and what it's doing: `Editing`, `Running`, `Searching`, `2 agents working`, or `Needs your input` in orange. Sessions that need you go on top, then the working ones, then the finished ones. A working row stays put until you send that session a new prompt, so the list doesn't reshuffle every time a tool runs. When the rows don't fit, each drops to one line and the last reads `+3 more`. Two thin bars above the list keep the 5-hour and weekly usage in view.
+**Sessions.** One row per open Claude Code session: the project folder and title (Claude Code's, or yours after `/rename`), how long it has been working or how long ago it finished, the git branch, and what it's doing: `Editing`, `Running`, `Searching`, `2 agents working`, or `Needs your input` in orange. Sessions that need you go on top, then the working ones, then the finished ones. A green check marks the ones that finished in the last minute. A working row stays put until you send that session a new prompt, so the list doesn't reshuffle every time a tool runs. When the rows don't fit, each drops to one line and the last reads `+3 more`. Two thin bars above the list keep the 5-hour and weekly usage in view.
 
 **Usage.** The 5-hour and weekly limits, each with the time left until it resets, and a pill with your plan. Enterprise accounts see their spend against the billing period.
 

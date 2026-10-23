@@ -1488,8 +1488,9 @@ void ui_update_sessions(const SessionsData* sessions) {
         lv_obj_set_pos(w.time, L.margin + L.content_w - time_w,
                        y + name_h - L.stat_value_font->base_line - sub_h + L.stat_label_font->base_line);
 
-        lv_label_set_text_static(w.mark, spinner_frames[done ? 0 : r.state == 'a' ? 3 : 1]);
-        lv_obj_set_style_text_color(w.mark, done ? COL_DIM : COL_ACCENT, 0);
+        const bool just_done = done && r.mins == 0;   // finished in the last minute
+        lv_label_set_text_static(w.mark, just_done ? CHECK : spinner_frames[done ? 0 : r.state == 'a' ? 3 : 1]);
+        lv_obj_set_style_text_color(w.mark, just_done ? COL_DONE : done ? COL_DIM : COL_ACCENT, 0);
         lv_obj_set_style_opa(w.mark, LV_OPA_COVER, 0);
         lv_obj_set_pos(w.mark, L.margin, y + (name_h - mark_h) / 2);
 
