@@ -65,7 +65,7 @@ public enum Sessions {
         public let title: String
         public let branch: String
         public let doing: String       // the row's second line, "" when done
-        public let minutes: Int        // since the task started (working) or the last event
+        public let minutes: Int        // since the task started (working), finished (done) or the last event
         let order: Double
 
         public init(id: String, state: String, project: String, title: String, branch: String,
@@ -110,7 +110,7 @@ public enum Sessions {
                 .filter { now - $0 < activeMax } ?? []
             if !agents.isEmpty && state == "d" { state = "w" }   // background agents still run
             let start = number(d["st"]), fin = number(d["fin"])
-            let since = state == "w" ? start ?? mtime : mtime
+            let since = state == "w" ? start ?? mtime : state == "d" ? fin ?? mtime : mtime
             // Rows keep their place while sessions work: a working row moves
             // only when a new prompt starts its task, a done row when it finishes.
             let order = state == "w" ? since : state == "d" ? fin ?? mtime : mtime

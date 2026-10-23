@@ -83,7 +83,8 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
     """{"k":"ss","v":[["project | title", state, minutes, doing, branch], ...]},
     sessions that need you first, then working, then done. Within each, the
     newest alert, task start or finish comes first. Minutes count from the
-    start of the task for a working session and from the last event otherwise.
+    start of the task for a working session, from its finish for a done one (the
+    idle prompt rewrites the file later) and from the last event otherwise.
     Doing and the branch share the row's second line; doing is "" for done, the
     branch "" outside git. A session counts as working while its subagents run,
     and the row says how many. Deletes files older than MAX_AGE. Adds "a" (what
@@ -116,7 +117,8 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
         if agents and state == "d":
             state = "w"   # its reply ended, but background agents still run
         start, fin = d.get("st"), d.get("fin")
-        since = start if state == "w" and isinstance(start, (int, float)) else mtime
+        since = (start if state == "w" and isinstance(start, (int, float))
+                 else fin if state == "d" and isinstance(fin, (int, float)) else mtime)
         name = _ascii(str(d.get("p") or "?"), 12)
         title = _ascii(str(d.get("ti") or ""), 32)
         if title:

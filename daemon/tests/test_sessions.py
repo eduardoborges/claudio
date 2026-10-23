@@ -156,6 +156,7 @@ def test_rows_keep_their_place_while_working(tmp_path):
     write_full(tmp_path, "d2", now - 200, p="d2", e="stop", fin=now - 200)
     msg = sessions_message(tmp_path, now, tmp_path / "config")
     assert [r[0] for r in msg["v"]] == ["new", "old", "d2", "d1"] and "n" not in msg
+    assert [r[2] for r in msg["v"]] == [1, 10, 3, 5]
     for i in range(ROWS):
         write_full(tmp_path, f"s{i}", now, e="stop")
     assert sessions_message(tmp_path, now, tmp_path / "config")["n"] == ROWS + 4

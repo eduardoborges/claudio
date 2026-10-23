@@ -165,6 +165,7 @@ private func sessionsDir() -> URL {
     write(s, "d2", now - 200, ["p": "d2", "e": "stop", "fin": now - 200])
     let msg = message(dir)
     #expect(rows(msg).map { $0[0] as! String } == ["new", "old", "d2", "d1"] && msg["n"] == nil)
+    #expect(rows(msg).map { $0[2] as! Int } == [1, 10, 3, 5])
     for i in 0..<Sessions.rows { write(s, "s\(i)", now, ["e": "stop"]) }
     #expect(message(dir)["n"] as? Int == Sessions.rows + 4)
 }
