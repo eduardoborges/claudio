@@ -146,6 +146,7 @@ static void parse_sessions(JsonDocument& doc) {
     sessions.total = doc["n"] | sessions.rows;
     strlcpy(sessions.activity, doc["a"] | "", sizeof(sessions.activity));
     sessions.done_id = doc["dn"] | 0UL;
+    strlcpy(sessions.done_task, doc["dt"] | "", sizeof(sessions.done_task));
     sessions.beep = doc["b"].as<bool>();
 }
 
@@ -490,7 +491,7 @@ void loop() {
                 Serial.println("task done — celebrate");
                 idle_note_activity();
                 if (sessions.beep) sound_hal_play(SOUND_RESET);
-                ui_celebrate();
+                ui_celebrate(sessions.done_task);
             }
             ble_send_ack();
         } else if (parsed == PARSE_USAGE) {

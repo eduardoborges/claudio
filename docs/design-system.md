@@ -20,6 +20,7 @@ it in sync when a token changes.
 | `THEME_DIM` | `#B0AEA5` | secondary text | reset times, labels, finished sessions |
 | `THEME_ACCENT` | `#D97757` | primary | bars, status line, heatmap, sessions that need you |
 | `THEME_ALERT` | `#C6613F` | earth accent | a bar at 80% or more, "Over pace" |
+| `THEME_SAGE` | `#788C5D` | sage accent | the check under the dancing Clawd |
 | `THEME_BADGE` | `#E3DACC` | secondary | badge fill ("Current", "Weekly", the plan) |
 | `THEME_ON_BADGE` | `#141413` | neutral 0 | badge text |
 | `THEME_LINE` | `#343431` | neutral dark at 34% | bar tracks, card borders, dividers, empty heatmap cells |
@@ -33,7 +34,7 @@ Everything is set in Anthropic Sans with no letter spacing. The spec pairs it
 with Anthropic Serif for headings, but there is no serif font file, so titles
 and numbers use the sans Display cut. Sizes from 28px up use Display, smaller
 ones use Text, and badges use Text Semibold (the spec's 600 weight). The
-status-line spinner glyphs come from DejaVu Sans Mono. To regenerate the fonts,
+status-line spinner glyphs and the check mark come from DejaVu Sans Mono. To regenerate the fonts,
 see `docs/fonts.md`.
 
 | Role | Large (480) | Compact (368×448) | Small (240) |

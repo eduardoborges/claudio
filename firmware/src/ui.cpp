@@ -211,6 +211,7 @@ static void compute_layout(const BoardCaps& c) {
 #define COL_ACCENT    THEME_ACCENT
 #define COL_ALERT     THEME_ALERT
 #define COL_LINE      THEME_LINE
+#define COL_DONE      THEME_SAGE
 
 // ---- Usage screen widgets (single non-splash view) ----
 static lv_obj_t* usage_container;
@@ -239,6 +240,9 @@ static lv_obj_t* lbl_session_pct_sym = nullptr;  // "%" in smaller font
 static lv_obj_t* lbl_spending_desc = nullptr;     // "of your monthly budget"
 static lv_obj_t* lbl_spending_status = nullptr;   // "Under pace" / "On pace" / "Over pace"
 static lv_obj_t* lbl_anim;      // status line: connection state + whimsical idle
+static lv_obj_t* done_box;      // celebration: check + finished task, over the status line
+static lv_obj_t* lbl_done_task;
+static int32_t   done_task_max_w;
 
 // ---- Battery indicator (shared, on top) ----
 static lv_obj_t* battery_img;
@@ -284,6 +288,7 @@ static const char* const spinner_frames[] = {
     "\xC2\xB7", "\xE2\x9C\xBB", "\xE2\x9C\xBD",
     "\xE2\x9C\xB6", "\xE2\x9C\xB3", "\xE2\x9C\xA2",
 };
+static const char* const CHECK = "\xE2\x9C\x94";   // a finished task, in the spinner's fonts
 #define SPINNER_COUNT 6
 #define SPINNER_PHASES (2 * (SPINNER_COUNT - 1))  // 10: ping-pong 0..5..0
 
@@ -956,6 +961,37 @@ static void init_usage_screen(lv_obj_t* scr) {
     lv_obj_set_style_text_font(lbl_anim, L.anim_font, 0);
     lv_obj_set_style_text_color(lbl_anim, COL_ACCENT, 0);
     lv_obj_align(lbl_anim, LV_ALIGN_BOTTOM_MID, 0, L.anim_y);
+
+    // Two labels rather than a recolored one: recolor can't escape a '#' in a title.
+    done_box = lv_obj_create(usage_container);
+    lv_obj_remove_style_all(done_box);
+    lv_obj_set_size(done_box, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(done_box, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(done_box, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(done_box, L.margin / 2, 0);
+    lv_obj_set_style_pad_hor(done_box, L.panel_pad_x, 0);
+    lv_obj_set_style_pad_ver(done_box, L.pill_pad_y, 0);
+    lv_obj_set_style_bg_color(done_box, COL_PANEL, 0);
+    lv_obj_set_style_bg_opa(done_box, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(done_box, COL_LINE, 0);
+    lv_obj_set_style_border_width(done_box, 1, 0);
+    lv_obj_set_style_radius(done_box, L.radius, 0);
+    lv_obj_remove_flag(done_box, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(done_box, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_t* check = lv_label_create(done_box);
+    lv_label_set_text_static(check, CHECK);
+    lv_obj_set_style_text_font(check, L.anim_font, 0);
+    lv_obj_set_style_text_color(check, COL_DONE, 0);
+    lbl_done_task = lv_label_create(done_box);
+    lv_obj_set_style_text_font(lbl_done_task, L.stat_value_font, 0);
+    lv_obj_set_style_text_color(lbl_done_task, COL_TEXT, 0);
+    lv_label_set_long_mode(lbl_done_task, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    done_task_max_w = L.content_w - 2 * L.panel_pad_x - L.margin / 2
+                      - text_width(CHECK, L.anim_font);
+    // Centered in the space under the dancing Clawd's feet (big_feet_y in splash.cpp).
+    lv_obj_update_layout(done_box);
+    const int32_t below = L.scr_h - L.scr_h * 7 / 8;
+    lv_obj_align(done_box, LV_ALIGN_BOTTOM_MID, 0, -(below - lv_obj_get_height(done_box)) / 2);
 }
 
 // LVGL sends CLICKED for any press that didn't scroll, swipes included. A tap
@@ -985,6 +1021,18 @@ static void alert_tap_cb(lv_event_t* e) {
     if (!alert_active || !was_tap()) return;
     ui_hide_alert();
     lv_indev_stop_processing((lv_indev_t*)lv_event_get_user_data(e));
+}
+
+// ---- Celebration: the finished task's name in place of the status line until
+// the dancing Clawd leaves, and at least CELEBRATE_MIN_MS on boards without him.
+static const uint32_t CELEBRATE_MIN_MS = 10000;
+static bool     celebrating = false;
+static uint32_t celebrate_since;
+
+static void end_celebration(void) {
+    celebrating = false;
+    lv_obj_add_flag(done_box, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(lbl_anim, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void init_alert(void) {
@@ -1213,6 +1261,10 @@ void ui_tick_anim(void) {
     }
 
     if (alert_active) return;          // the status line holds the alert message
+    if (celebrating) {
+        if (now - celebrate_since < CELEBRATE_MIN_MS || splash_mascot_celebrating()) return;
+        end_celebration();
+    }
 
     if (now - anim_msg_start >= ANIM_MSG_MS) {
         anim_msg_idx = (anim_msg_idx + 1) % ANIM_MSG_COUNT;
@@ -1341,6 +1393,7 @@ void ui_update_battery(int percent, bool charging, bool usb_power) {
 
 void ui_show_alert(const char* message) {
     alert_active = true;
+    if (celebrating) end_celebration();
     if (current_screen == SCREEN_SPLASH) ui_show_screen(SCREEN_USAGE);
     splash_mascot_attention(true);
     lv_label_set_long_mode(lbl_anim, LV_LABEL_LONG_SCROLL_CIRCULAR);
@@ -1359,10 +1412,18 @@ void ui_hide_alert(void) {
     lv_timer_pause(alert_timer);
 }
 
-void ui_celebrate(void) {
+void ui_celebrate(const char* task) {
     if (alert_active) return;           // the alert's Clawd is already out
     if (current_screen == SCREEN_SPLASH) ui_show_screen(SCREEN_USAGE);
     splash_mascot_celebrate();
+    if (!task[0]) return;
+    lv_label_set_text(lbl_done_task, task);
+    // A fixed width, so a name that doesn't fit scrolls.
+    lv_obj_set_width(lbl_done_task, LV_MIN(text_width(task, L.stat_value_font), done_task_max_w));
+    lv_obj_add_flag(lbl_anim, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(done_box, LV_OBJ_FLAG_HIDDEN);
+    celebrating = true;
+    celebrate_since = lv_tick_get();
 }
 
 void ui_update_stats(const StatsData* stats) {

@@ -25,5 +25,6 @@ void ui_update_battery(int percent, bool charging, bool usb_power);  // percent 
 void ui_show_alert(const char* message);
 void ui_hide_alert(void);
 // A long Claude Code task finished: the full-size Clawd walks on, celebrates
-// and leaves on his own. Skipped while an alert is up.
-void ui_celebrate(void);
+// and leaves on his own, with a check and the task's name under him. Skipped
+// while an alert is up.
+void ui_celebrate(const char* task);

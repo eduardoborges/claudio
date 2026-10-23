@@ -60,5 +60,6 @@ struct SessionsData {
     uint8_t total;           // every open session, more than rows when some were left out
     char activity[12];       // animation the corner Clawd plays while a session works, "" = none
     uint32_t done_id;        // when a long task just finished (daemon clock), 0 = none
+    char done_task[33];      // its "project | title", "" from an older daemon
     bool beep;               // chime along with that celebration
 };

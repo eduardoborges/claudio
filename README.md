@@ -60,7 +60,7 @@ The display starts on Sessions. Swipe sideways or tap the left button to move be
 
 <img src="screenshots/alert.png" width="240" align="right" alt="Clawd pointing at a session that needs input">
 
-When Claude Code asks a question or wants a permission, Clawd walks onto the screen, waves, points, and the message scrolls along the bottom. He leaves when you tap the screen, when the session moves on, or after two minutes. When a task that ran for five minutes or more finishes, he comes back to dance.
+When Claude Code asks a question or wants a permission, Clawd walks onto the screen, waves, points, and the message scrolls along the bottom. He leaves when you tap the screen, when the session moves on, or after two minutes. When a task that ran for five minutes or more finishes, he comes back to dance, with the task's name under him.
 
 While sessions work, the small Clawd in the corner acts out the newest one: he types on a laptop during edits and shell commands, holds a magnifier while Claude reads or searches, and rides a cloud while it thinks. The splash plays Anthropic's official Clawd animations, which get busier as your usage climbs.
 

@@ -691,6 +691,8 @@ void splash_mascot_celebrate(void) {
     big_walk_on();
 }
 
+bool splash_mascot_celebrating(void) { return mas_party; }
+
 void splash_mascot_work(const char *anim_name) {
     const splash_anim_def_t *a = (anim_name && anim_name[0]) ? anim_by_name(anim_name) : NULL;
     mas_work = (anim_bytes(a, mas_cell) <= mas_buf_bytes) ? a : NULL;

@@ -9,6 +9,7 @@
 #define THEME_DIM      lv_color_hex(0xb0aea5)   // secondary text
 #define THEME_ACCENT   lv_color_hex(0xd97757)   // primary: terracotta
 #define THEME_ALERT    lv_color_hex(0xc6613f)   // earth accent: a limit close to running out
+#define THEME_SAGE     lv_color_hex(0x788c5d)   // sage accent: a finished task's check
 #define THEME_BADGE    lv_color_hex(0xe3dacc)   // secondary: badge fill
 #define THEME_ON_BADGE lv_color_hex(0x141413)   // text on a badge
 // Neutral dark (#73726c) at the system's 34% opacity over the panel, pre-mixed:
