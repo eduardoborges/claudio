@@ -21,10 +21,11 @@ private func write(_ dir: URL, _ id: String, _ mtime: Double, _ fields: [String:
     return file
 }
 
-private func message(_ dir: URL, _ now: Double = now, config: String? = nil) -> [String: Any] {
+private func message(_ dir: URL, _ now: Double = now, config: String? = nil,
+                     alive: (Int32) -> Bool = { _ in true }) -> [String: Any] {
     let file = dir.appending(path: "config")
     if let config { try! config.write(to: file, atomically: true, encoding: .utf8) }
-    let msg = Sessions.message(in: dir.appending(path: "s"), now: now, config: Config(file: file))
+    let msg = Sessions.message(in: dir.appending(path: "s"), now: now, config: Config(file: file), alive: alive)
     return try! JSONSerialization.jsonObject(with: Data(msg.encoded.utf8)) as! [String: Any]
 }
 
@@ -168,6 +169,16 @@ private func sessionsDir() -> URL {
     #expect(rows(msg).map { $0[2] as! Int } == [1, 10, 3, 5])
     for i in 0..<Sessions.rows { write(s, "s\(i)", now, ["e": "stop"]) }
     #expect(message(dir)["n"] as? Int == Sessions.rows + 4)
+}
+
+@Test func sessionWhoseClaudeExitedIsDropped() {
+    let dir = sessionsDir(), s = dir.appending(path: "s")
+    let dead = write(s, "dead", now - 5, ["p": "dead", "e": "clear", "pid": 111])
+    write(s, "live", now - 5, ["p": "live", "e": "clear", "pid": 222])
+    write(s, "old", now - 5, ["p": "old", "e": "clear"])   // written before the hook kept a pid
+    let msg = message(dir, alive: { $0 != 111 })
+    #expect(rows(msg).map { $0[0] as! String }.sorted() == ["live", "old"])
+    #expect(!FileManager.default.fileExists(atPath: dead.path))
 }
 
 @Test func jsonEncodesLikePython() {

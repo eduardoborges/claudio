@@ -9,8 +9,9 @@
 #   attention-hook.sh subagent SubagentStop
 # Every call also records the session's last event in sessions/<session id>,
 # with the git branch, the session's title (a /rename wins over the generated
-# one), the last tool, when the current task started (st) and when it finished
-# (fin, set only by Stop: the idle prompt rewrites the file later).
+# one), the last tool, when the current task started (st), when it finished
+# (fin, set only by Stop: the idle prompt rewrites the file later) and the
+# claude process's pid.
 # Hook stdout can reach the model, so print nothing and always exit 0.
 exec >/dev/null 2>&1
 PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
@@ -51,15 +52,27 @@ if [ "$1" = end ]; then
   rm -f "$f"
 else
   old=$(jq -c 'objects' "$f" 2>/dev/null); [ -n "$old" ] || old='{}'
+  # The claude process running this hook, so the reader can drop the session
+  # once it exits without SessionEnd (a crash, a closed terminal). Claude Code
+  # may put a shell between us, so walk up a few parents. Only a process
+  # called claude counts: a wrong pid would hide a live session.
+  pid=null p=$PPID
+  for _ in 1 2 3 4; do
+    case "$(ps -o comm= -p "$p")" in *claude*) pid=$p; break ;; esac
+    p=$(ps -o ppid= -p "$p" | tr -d ' ')
+    [ -n "$p" ] || break
+  done
   br=$(git -C "$(printf '%s' "$in" | jq -r '.cwd // empty')" branch --show-current)
   ti=$(LC_ALL=C grep -E '^\{"type":"(ai|custom)-title"' "$(printf '%s' "$in" | jq -r '.transcript_path // empty')" \
     | jq -rs '(map(.customTitle // empty) | last) // (map(.aiTitle // empty) | last) // empty')
-  printf '%s' "$in" | jq -c --arg e "$e" --arg br "$br" --arg ti "$ti" --argjson o "$old" --argjson now "$(date +%s)" '
+  printf '%s' "$in" | jq -c --arg e "$e" --arg br "$br" --arg ti "$ti" --argjson o "$old" --argjson now "$(date +%s)" \
+      --argjson pid "$pid" '
       .hook_event_name as $h
       | {p: ((.cwd // "") | split("/") | last), br: (if $br == "" then null else $br end),
          ti: (if $ti == "" then null else $ti end), e: $e,
          t: (if $h == "PreToolUse" then .tool_name elif $h == "UserPromptSubmit" then "" else ($o.t // "") end),
-         st: (if $h == "UserPromptSubmit" then $now else ($o.st // $now) end), ag: $o.ag}
+         st: (if $h == "UserPromptSubmit" then $now else ($o.st // $now) end), ag: $o.ag,
+         pid: ($pid // $o.pid)}
       | if $h == "Stop" then .fin = $now elif $h == "UserPromptSubmit" then . else .fin = $o.fin end
       | del(.. | nulls)' \
     > "$D/sessions/.$s.$$" && mv "$D/sessions/.$s.$$" "$f"

@@ -3,12 +3,13 @@
 
 attention-hook.sh leaves one file per session in SESSIONS_DIR holding the
 project name, the git branch, the session's title, the last hook event, the
-last tool and when the current task started; the file's mtime says when the
-last event happened.
+last tool, when the current task started and the claude process's pid; the
+file's mtime says when the last event happened.
 No third-party imports: the macOS daemon imports it, and the Linux daemon runs
 it as a script that prints the message.
 """
 import json
+import os
 import time
 import unicodedata
 from pathlib import Path
@@ -16,7 +17,7 @@ from pathlib import Path
 SESSIONS_DIR = Path.home() / ".config" / "claude-usage-monitor" / "sessions"
 ROWS = 6           # firmware's SESSION_ROWS must match
 MAX_BYTES = 511    # the firmware's BLE buffer, less the terminator
-MAX_AGE = 6 * 3600  # a session that crashed never fires SessionEnd
+MAX_AGE = 6 * 3600  # a crashed session without a pid never fires SessionEnd
 # Hook event -> state: a = needs you, w = working, d = done (waiting for a prompt).
 STATE = {"alert": "a", "clear": "w", "stop": "d"}
 CONFIG_FILE = SESSIONS_DIR.parent / "config"
@@ -55,6 +56,17 @@ def _setting(name: str, path: Path) -> str:
     return ""
 
 
+def _alive(pid: int) -> bool:
+    """False only when no process has this pid: EPERM means someone else's."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except OSError:
+        pass
+    return True
+
+
 def _activity(tool: str) -> str:
     """The splash animation the corner Clawd plays for this tool."""
     if tool in TYPING:
@@ -79,7 +91,7 @@ def _doing(state: str, tool: str, agents: int = 0) -> str:
 
 
 def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
-                     config: Path = CONFIG_FILE) -> dict:
+                     config: Path = CONFIG_FILE, alive=_alive) -> dict:
     """{"k":"ss","v":[["project | title", state, minutes, doing, branch], ...]},
     sessions that need you first, then working, then done. Within each, the
     newest alert, task start or finish comes first. Minutes count from the
@@ -87,7 +99,8 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
     idle prompt rewrites the file later) and from the last event otherwise.
     Doing and the branch share the row's second line; doing is "" for done, the
     branch "" outside git. A session counts as working while its subagents run,
-    and the row says how many. Deletes files older than MAX_AGE. Adds "a" (what
+    and the row says how many. Deletes files older than MAX_AGE and those whose
+    claude process is gone. Adds "a" (what
     the newest working session is doing), "dn" (when a long task just finished,
     plus "dt" with its row's name and "b" to beep) and "n" (all open sessions,
     when some are left out)."""
@@ -104,6 +117,11 @@ def sessions_message(path: Path = SESSIONS_DIR, now: float | None = None,
                 f.unlink()
                 continue
             d = json.loads(f.read_text())
+            # Its claude exited without SessionEnd (a crash, a closed terminal).
+            pid = d.get("pid") if isinstance(d, dict) else None
+            if type(pid) is int and 0 < pid < 2**31 and not alive(pid):
+                f.unlink()
+                continue
         except (OSError, ValueError):
             continue
         state = STATE.get(d.get("e")) if isinstance(d, dict) else None

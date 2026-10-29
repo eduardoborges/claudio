@@ -5,14 +5,14 @@ import Foundation
 ///
 /// attention-hook.sh leaves one file per session in `directory` holding the
 /// project name, the git branch, the session's title, the last hook event,
-/// the last tool and when the current task started; the file's mtime says
-/// when the last event happened.
+/// the last tool, when the current task started and the claude process's pid;
+/// the file's mtime says when the last event happened.
 public enum Sessions {
     public static let directory = FileManager.default.homeDirectoryForCurrentUser
         .appending(path: ".config/claude-usage-monitor/sessions")
     public static let rows = 6           // the firmware's SESSION_ROWS
     public static let maxBytes = 511     // the firmware's BLE buffer, less the terminator
-    static let maxAge = 6.0 * 3600      // a session that crashed never fires SessionEnd
+    static let maxAge = 6.0 * 3600      // a crashed session without a pid never fires SessionEnd
     // Hook event -> state: a = needs you, w = working, d = done.
     static let states = ["alert": "a", "clear": "w", "stop": "d"]
     // The corner Clawd acts out the newest working session's last tool, until
@@ -38,6 +38,11 @@ public enum Sessions {
         let words = String(String.UnicodeScalarView(kept))
             .split { $0.isWhitespace || ("\u{1c}"..."\u{1f}").contains($0) }
         return String(words.joined(separator: " ").prefix(limit))
+    }
+
+    /// False only when no process has this pid: EPERM means someone else's.
+    public static func alive(_ pid: Int32) -> Bool {
+        kill(pid, 0) == 0 || errno != ESRCH
     }
 
     /// The splash animation the corner Clawd plays for this tool.
@@ -86,9 +91,9 @@ public enum Sessions {
 
     /// Reads the hook's files: sessions that need you first, then working, then
     /// done. Within each, the newest alert, task start or finish comes first.
-    /// Deletes files older than maxAge.
+    /// Deletes files older than maxAge and those whose claude process is gone.
     public static func snapshot(in directory: URL = directory, now: Double = Date().timeIntervalSince1970,
-                                config: Config = Config()) -> Snapshot {
+                                config: Config = Config(), alive: (Int32) -> Bool = alive) -> Snapshot {
         let raw = config.value("done_after")   // digits only, like Python's isdigit()
         let doneAfter = !raw.isEmpty && raw.allSatisfy({ $0.isASCII && $0.isNumber }) ? Int(raw) ?? Self.doneAfter : Self.doneAfter
         var snap = Snapshot()
@@ -102,8 +107,13 @@ public enum Sessions {
                 continue
             }
             guard let data = try? Data(contentsOf: file),
-                  let d = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  var state = states[text(d["e"])] else { continue }
+                  let d = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            // Its claude exited without SessionEnd (a crash, a closed terminal).
+            if let pid = number(d["pid"]).flatMap({ Int32(exactly: $0) }), pid > 0, !alive(pid) {
+                try? FileManager.default.removeItem(at: file)
+                continue
+            }
+            guard var state = states[text(d["e"])] else { continue }
             // Subagents the hook saw recently. One whose SubagentStop never came
             // (a killed agent) ages out like a quiet session.
             let agents = (d["ag"] as? [String: Any])?.values.compactMap(number)
@@ -176,8 +186,8 @@ public enum Sessions {
 
     /// The device message straight from the files.
     public static func message(in directory: URL = directory, now: Double = Date().timeIntervalSince1970,
-                               config: Config = Config()) -> JSON {
-        message(from: snapshot(in: directory, now: now, config: config), config: config)
+                               config: Config = Config(), alive: (Int32) -> Bool = alive) -> JSON {
+        message(from: snapshot(in: directory, now: now, config: config, alive: alive), config: config)
     }
 
     static func text(_ value: Any?, or fallback: String = "") -> String {

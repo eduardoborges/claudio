@@ -160,3 +160,14 @@ def test_rows_keep_their_place_while_working(tmp_path):
     for i in range(ROWS):
         write_full(tmp_path, f"s{i}", now, e="stop")
     assert sessions_message(tmp_path, now, tmp_path / "config")["n"] == ROWS + 4
+
+
+def test_session_whose_claude_exited_is_dropped(tmp_path):
+    now = 1_000_000.0
+    dead = tmp_path / "dead"
+    write_full(tmp_path, "dead", now - 5, p="dead", e="clear", pid=111)
+    write_full(tmp_path, "live", now - 5, p="live", e="clear", pid=222)
+    write_full(tmp_path, "old", now - 5, p="old", e="clear")   # written before the hook kept a pid
+    msg = sessions_message(tmp_path, now, tmp_path / "config", alive=lambda pid: pid != 111)
+    assert sorted(r[0] for r in msg["v"]) == ["live", "old"]
+    assert not dead.exists()

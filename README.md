@@ -157,7 +157,7 @@ Merge these into `~/.claude/settings.json` and point the path at your checkout. 
 | `UserPromptSubmit`, `PostToolUse` | Ending the alert once you answer |
 | `Stop` | Marking a session done, and the celebration after a long task |
 | `SubagentStop` | The `2 agents working` count. Without it, a finished agent keeps counting for up to 10 minutes |
-| `SessionEnd` | Taking closed sessions off the list. Without it, they stay for up to six hours |
+| `SessionEnd` | Taking a session off the list as soon as it ends, `/clear` included. Without it, a session stays until its Claude Code exits |
 
 </details>
 
