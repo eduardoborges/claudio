@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/eduardoborges/claudio/compare/v0.3.0...v0.4.0) (2026-10-29)
+
+
+### Features
+
+* **daemon:** send the name of the task that just finished ([66a5565](https://github.com/eduardoborges/claudio/commit/66a55654518b4683d72b8a50a28f5f705b33d45f))
+* **ui:** check the sessions that finished in the last minute ([28a2a52](https://github.com/eduardoborges/claudio/commit/28a2a5267f89f37311d524d86d5e858c2c62f52a))
+* **ui:** show the finished task under the dancing Clawd ([f0ede53](https://github.com/eduardoborges/claudio/commit/f0ede5388cd9febebbccd080292a62f6d24c2b54))
+
+
+### Bug Fixes
+
+* **daemon:** count a finished session's minutes from when it finished ([2c4cfdf](https://github.com/eduardoborges/claudio/commit/2c4cfdf40da98ebd5b407788962d17374741965f))
+* **mac:** stop typing in the menu bar once sessions go quiet ([33b9a70](https://github.com/eduardoborges/claudio/commit/33b9a709f8c6ccea0ec6dad43fef8cecf5a2295e))
+* **sessions:** drop a session once its claude process exits ([d8da9d6](https://github.com/eduardoborges/claudio/commit/d8da9d67e18fc8740808d18f739ffcfe950b4d0e))
+
+
+### Performance Improvements
+
+* **mac:** animate the menu bar icon at 6 fps ([ab37851](https://github.com/eduardoborges/claudio/commit/ab37851c6cc029982e2d801fb1465a4e3dd93114))
+
 ## [0.3.0](https://github.com/eduardoborges/claudio/compare/v0.2.0...v0.3.0) (2026-10-16)
 
 
