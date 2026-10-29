@@ -8,7 +8,9 @@ import Observation
 @Observable
 final class MenuBarIcon {
     static let shared = MenuBarIcon()
-    static let fps = 12.0
+    /// Each frame makes AppKit redraw every copy of the status item, so the CPU
+    /// cost grows with fps: 12 fps took a quarter of a core.
+    static let fps = 6.0
 
     private(set) var image: NSImage
 
