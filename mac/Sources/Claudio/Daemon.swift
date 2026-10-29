@@ -134,7 +134,9 @@ final class Daemon {
 
         let sessions = Sessions.snapshot()
         dashboard.sessions = sessions.sessions
-        MenuBarIcon.shared.setWorking(sessions.sessions.contains { $0.state == "w" })
+        // `activity` leaves out sessions quiet for ten minutes, so an interrupted
+        // reply (which never fires Stop) doesn't keep Clawd typing.
+        MenuBarIcon.shared.setWorking(sessions.activity != nil)
 
         // Today: scanning the transcripts takes a moment, so check once a
         // minute, off the main thread, and only when something changed.
