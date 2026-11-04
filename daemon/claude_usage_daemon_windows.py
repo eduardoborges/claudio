@@ -201,6 +201,7 @@ async def poll_api(token: str) -> dict | None:
     # At the usage limit the API answers 429 but still sends the quota headers.
     at_limit = resp.status_code == 429 and (
         "anthropic-ratelimit-unified-5h-utilization" in resp.headers
+        or "anthropic-ratelimit-unified-7d-utilization" in resp.headers
         or "anthropic-ratelimit-unified-overage-utilization" in resp.headers)
     if resp.status_code >= 400 and not at_limit:
         # Other 4xx/5xx (rate-limit, server error) — transient, not a token issue.
@@ -226,14 +227,18 @@ async def poll_api(token: str) -> dict | None:
         except ValueError:
             return 0
 
-    if resp.headers.get("anthropic-ratelimit-unified-5h-utilization"):
+    # A verified Ultra account has no 5-hour limit and sends only 7d.
+    five = resp.headers.get("anthropic-ratelimit-unified-5h-utilization")
+    if five or resp.headers.get("anthropic-ratelimit-unified-7d-utilization"):
         payload = {
-            "s": pct(hdr("anthropic-ratelimit-unified-5h-utilization")),
-            "sr": reset_minutes(hdr("anthropic-ratelimit-unified-5h-reset")),
+            "s": pct(five) if five else 0,
+            "sr": reset_minutes(hdr("anthropic-ratelimit-unified-5h-reset")) if five else -1,
             "w": pct(hdr("anthropic-ratelimit-unified-7d-utilization")),
             "wr": reset_minutes(hdr("anthropic-ratelimit-unified-7d-reset")),
-            "st": hdr("anthropic-ratelimit-unified-5h-status", "unknown"),
+            "st": hdr("anthropic-ratelimit-unified-5h-status" if five
+                      else "anthropic-ratelimit-unified-status", "unknown"),
             "acct": "pro",
+            **({} if five else {"hs": False}),
             "ok": True,
         }
     else:

@@ -41,3 +41,18 @@ def test_429_with_quota_headers_is_data(mod, monkeypatch):
 @pytest.mark.parametrize("mod", [mac, win])
 def test_429_without_quota_headers_is_still_a_miss(mod, monkeypatch):
     assert run_poll(mod, monkeypatch, 429, {}) is None
+
+
+@pytest.mark.parametrize("status", [200, 429])
+@pytest.mark.parametrize("mod", [mac, win])
+def test_weekly_only_account_has_no_session(mod, monkeypatch, status):
+    # A verified Ultra account: no 5h headers, only 7d and the unified status.
+    now = time.time()
+    payload = run_poll(mod, monkeypatch, status, {
+        "anthropic-ratelimit-unified-status": "allowed",
+        "anthropic-ratelimit-unified-7d-utilization": "0.06",
+        "anthropic-ratelimit-unified-7d-reset": str(int(now + 86400)),
+    })
+    assert payload["hs"] is False and payload["acct"] == "pro"
+    assert (payload["s"], payload["sr"], payload["w"]) == (0, -1, 6)
+    assert 1439 <= payload["wr"] <= 1440 and payload["st"] == "allowed"

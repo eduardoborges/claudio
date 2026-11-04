@@ -578,24 +578,30 @@ build_payload_for_token() {
     chime=$(read_chime_setting)
     [ "$chime" = "on" ] && chime_fragment=",\"c\":1"
 
-    local payload
-    if [ -n "$s5h_util" ]; then
-        # Pro/Max account — 5h/7d windows
-        local s7d_util s5h_reset s7d_reset s5h_status
+    local payload s7d_util
+    s7d_util=$(echo "$headers" | grep -i "anthropic-ratelimit-unified-7d-utilization" | tr -d '\r' | awk '{print $2}')
+    if [ -n "$s5h_util" ] || [ -n "$s7d_util" ]; then
+        # Pro/Max account: 5h/7d windows. A verified Ultra account has no
+        # 5-hour limit and sends only 7d.
+        local s5h_reset s7d_reset s5h_status has_session=1
         s5h_reset=$(echo "$headers" | grep -i "anthropic-ratelimit-unified-5h-reset" | tr -d '\r' | awk '{print $2}')
-        s7d_util=$(echo "$headers" | grep -i "anthropic-ratelimit-unified-7d-utilization" | tr -d '\r' | awk '{print $2}')
         s7d_reset=$(echo "$headers" | grep -i "anthropic-ratelimit-unified-7d-reset" | tr -d '\r' | awk '{print $2}')
         s5h_status=$(echo "$headers" | grep -i "anthropic-ratelimit-unified-5h-status" | tr -d '\r' | awk '{print $2}')
+        if [ -z "$s5h_util" ]; then
+            has_session=0
+            s5h_status=$status
+        fi
         s5h_util=${s5h_util:-0}; s5h_reset=${s5h_reset:-0}
         s7d_util=${s7d_util:-0}; s7d_reset=${s7d_reset:-0}
         s5h_status=${s5h_status:-unknown}
-        payload=$(awk -v u5="$s5h_util" -v r5="$s5h_reset" -v u7="$s7d_util" -v r7="$s7d_reset" -v st="$s5h_status" -v now="$now" -v clk="$clock_fragment" -v chm="$chime_fragment" \
+        payload=$(awk -v u5="$s5h_util" -v r5="$s5h_reset" -v u7="$s7d_util" -v r7="$s7d_reset" -v st="$s5h_status" -v hs="$has_session" -v now="$now" -v clk="$clock_fragment" -v chm="$chime_fragment" \
             'BEGIN {
                 sp = sprintf("%.0f", u5 * 100);
                 sr = (r5 - now) / 60; sr = sr > 0 ? sprintf("%.0f", sr) : 0;
+                if (!hs) sr = -1;
                 wp = sprintf("%.0f", u7 * 100);
                 wr = (r7 - now) / 60; wr = wr > 0 ? sprintf("%.0f", wr) : 0;
-                printf "{\"s\":%s,\"sr\":%s,\"w\":%s,\"wr\":%s,\"st\":\"%s\",\"acct\":\"pro\"%s%s,\"ok\":true}", sp, sr, wp, wr, st, clk, chm;
+                printf "{\"s\":%s,\"sr\":%s,\"w\":%s,\"wr\":%s,\"st\":\"%s\",\"acct\":\"pro\"%s%s%s,\"ok\":true}", sp, sr, wp, wr, st, hs ? "" : ",\"hs\":false", clk, chm;
             }')
     else
         # Enterprise account — spending-limit model
@@ -634,9 +640,13 @@ PYEOF
     return 0
 }
 
-# Extract the integer session % ("s") from a built payload, or 0.
+# Extract the integer session % ("s") from a built payload, or 0. Without a
+# 5-hour window ("hs":false), use the weekly % ("w") instead, since that is
+# what rises when the plan is used.
 _payload_session_pct() {
-    echo "$1" | grep -o '"s":[0-9]*' | head -1 | cut -d: -f2
+    local key=s
+    case "$1" in *'"hs":false'*) key=w ;; esac
+    echo "$1" | grep -o "\"$key\":[0-9]*" | head -1 | cut -d: -f2
 }
 
 # Poll every configured config dir, decide which plan is "active", and send

@@ -172,6 +172,24 @@ def test_poll_active_payload_selects_higher_util_plan(monkeypatch):
     assert payload["s"] == 40  # startup -> highest util plan (B)
 
 
+def test_poll_active_tracks_weekly_when_there_is_no_session(monkeypatch):
+    monkeypatch.setattr(mod, "read_config_dirs", lambda: [A, B])
+    monkeypatch.setattr(mod, "read_token_for", lambda d: {A: "tA", B: "tB"}[d])
+    monkeypatch.setattr(mod, "read_creds_for", lambda d: None)
+    weekly = {"tA": 10}
+
+    async def fake_poll(token):
+        if token == "tB":
+            return {"s": 30, "ok": True}
+        return {"s": 0, "hs": False, "w": weekly["tA"], "ok": True}
+
+    sel = PlanSelector()
+    with patch.object(mod, "poll_api", new=AsyncMock(side_effect=fake_poll)):
+        assert _run(mod.poll_active_payload(sel))["s"] == 30   # startup: B is higher
+        weekly["tA"] = 11
+        assert _run(mod.poll_active_payload(sel)).get("hs") is False   # A's weekly rose
+
+
 # ---------------------------------------------------------------------------
 # discover_target — the daemon only ever targets the device this system already
 # holds; it never scans for a nearby device by name (there is no scan fallback).

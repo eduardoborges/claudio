@@ -15,7 +15,7 @@ Each write to RX is one JSON message of at most 511 bytes. A message without `k`
 { "s": 45, "sr": 120, "w": 28, "wr": 7200, "st": "allowed", "ok": true }
 ```
 
-`s` and `w` are the session and weekly percentages, `sr` and `wr` the minutes until each resets, `st` the status and `ok` whether the request worked. A reading can also carry an alert: `m` is the message (ASCII), `b` beeps once and `x` ends the alert.
+`s` and `w` are the session and weekly percentages, `sr` and `wr` the minutes until each resets, `st` the status and `ok` whether the request worked. `hs` is `false` when the plan has no 5-hour window, as on a verified Ultra account. `s` is then 0, `sr` is -1, and the device shows only the weekly limit. A reading can also carry an alert: `m` is the message (ASCII), `b` beeps once and `x` ends the alert.
 
 Messages with `k` feed the other workspaces:
 
