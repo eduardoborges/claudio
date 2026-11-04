@@ -1193,6 +1193,7 @@ void ui_update(const UsageData* data) {
         lv_label_set_text(lbl_weekly_reset, buf);
     } else {
         int w_pct = (int)(data->weekly_pct + 0.5f);
+        lv_label_set_text(lbl_weekly_label, "Weekly");
         lv_label_set_text_fmt(lbl_weekly_pct, "%d%%", w_pct);
         lv_bar_set_value(bar_weekly, w_pct, LV_ANIM_ON);
         lv_obj_set_style_bg_color(bar_weekly, pct_color(data->weekly_pct), LV_PART_INDICATOR);
