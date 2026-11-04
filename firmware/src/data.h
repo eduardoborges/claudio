@@ -4,6 +4,7 @@
 struct UsageData {
     float session_pct;       // utilization 0-100 (5h window Pro/Max; spending % Enterprise)
     int session_reset_mins;  // minutes until reset
+    bool has_session;        // false = no 5-hour window (Ultra): weekly limit only
     float weekly_pct;        // 7-day utilization (Pro/Max only; 0 for Enterprise)
     int weekly_reset_mins;   // minutes until weekly reset (Pro/Max only)
     char status[16];         // "allowed", "limited", etc.
@@ -15,7 +16,7 @@ struct UsageData {
     int time_pct;            // 0-100: fraction of billing period elapsed (Enterprise)
     int period_days;         // total billing period length in days (Enterprise)
     char reset_date[12];     // formatted reset date e.g. "Jul 1" (Enterprise)
-    char plan[16];           // subscription, e.g. "Max 20x"; empty = not sent
+    char plan[16];           // subscription, e.g. "Ultra"; empty = not sent
     long clock_epoch;        // local wall-clock epoch (s) from daemon; 0 = not provided
     int  clock_fmt;          // 12 or 24 (hour format from daemon); defaults to 24
     bool ok;                 // data parse succeeded

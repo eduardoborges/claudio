@@ -739,10 +739,11 @@ struct MiniBar { lv_obj_t *name, *bar, *pct; };
 static MiniBar sess_use[2];
 static int32_t sess_use_h;                   // the strip and its gap to the rows
 
-static void set_mini_bar(int i, const char* name, int pct, lv_color_t color) {
+// `full` spans the whole strip, for a bar with no neighbour.
+static void set_mini_bar(int i, const char* name, int pct, lv_color_t color, bool full = false) {
     const MiniBar& m = sess_use[i];
     const int32_t gap  = L.margin / 2;
-    const int32_t half = (L.content_w - L.margin) / 2;
+    const int32_t half = full ? L.content_w : (L.content_w - L.margin) / 2;
     const int32_t x    = L.margin + i * (half + L.margin);
     const int32_t name_w = text_width(name, L.use_font);
     const int32_t pct_w  = text_width("100%", L.use_font);
@@ -761,6 +762,12 @@ static void set_mini_bar(int i, const char* name, int pct, lv_color_t color) {
     lv_obj_clear_flag(m.name, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(m.bar, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(m.pct, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void hide_mini_bar(int i) {
+    lv_obj_add_flag(sess_use[i].name, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(sess_use[i].bar, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(sess_use[i].pct, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void build_sessions_workspace(lv_obj_t* tile) {
@@ -1117,6 +1124,7 @@ void ui_update(const UsageData* data) {
     }
 
     int s_pct = (int)(data->session_pct + 0.5f);
+    const bool weekly_only = !data->enterprise && !data->has_session;
 
     if (data->enterprise) {
         // Spending box: big number-only label + small "%" symbol + desc + pace
@@ -1153,6 +1161,9 @@ void ui_update(const UsageData* data) {
         lv_label_set_text_fmt(lbl_session_pct, "%d", s_pct);
         lv_obj_align_to(lbl_session_pct_sym, lbl_session_pct,
                         LV_ALIGN_OUT_RIGHT_TOP, 4, 12);
+    } else if (weekly_only) {
+        lv_label_set_text(lbl_session_pct, "No limit");
+        lv_label_set_text(lbl_session_reset, "Weekly limit only");
     } else {
         lv_label_set_text_fmt(lbl_session_pct, "%d%%", s_pct);
         format_reset_time(data->session_reset_mins, s_pct >= 100, buf, sizeof(buf));
@@ -1161,7 +1172,13 @@ void ui_update(const UsageData* data) {
 
     lv_bar_set_value(bar_session, s_pct, LV_ANIM_ON);
     lv_obj_set_style_bg_color(bar_session, pct_color(data->session_pct), LV_PART_INDICATOR);
-    set_mini_bar(0, data->enterprise ? "Spend" : "5h", s_pct, pct_color(data->session_pct));
+    if (weekly_only) {
+        lv_obj_add_flag(bar_session, LV_OBJ_FLAG_HIDDEN);
+        hide_mini_bar(1);
+    } else {
+        lv_obj_clear_flag(bar_session, LV_OBJ_FLAG_HIDDEN);
+        set_mini_bar(0, data->enterprise ? "Spend" : "5h", s_pct, pct_color(data->session_pct));
+    }
 
     if (data->enterprise) {
         // Period box: time % + dynamic pace color + "Resets <date>" label
@@ -1179,7 +1196,7 @@ void ui_update(const UsageData* data) {
         lv_label_set_text_fmt(lbl_weekly_pct, "%d%%", w_pct);
         lv_bar_set_value(bar_weekly, w_pct, LV_ANIM_ON);
         lv_obj_set_style_bg_color(bar_weekly, pct_color(data->weekly_pct), LV_PART_INDICATOR);
-        set_mini_bar(1, "7d", w_pct, pct_color(data->weekly_pct));
+        set_mini_bar(weekly_only ? 0 : 1, "7d", w_pct, pct_color(data->weekly_pct), weekly_only);
         format_reset_time(data->weekly_reset_mins, w_pct >= 100, buf, sizeof(buf));
         lv_label_set_text(lbl_weekly_reset, buf);
     }

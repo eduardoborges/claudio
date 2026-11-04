@@ -191,6 +191,7 @@ static ParseResult parse_json(const char* json, UsageData* out) {
 
     out->session_pct = doc["s"] | 0.0f;
     out->session_reset_mins = doc["sr"] | -1;
+    out->has_session = doc["hs"] | true;   // absent (Pro/Max, older daemons) → has one
     out->weekly_pct = doc["w"] | 0.0f;
     out->weekly_reset_mins = doc["wr"] | -1;
     strlcpy(out->status, doc["st"] | "unknown", sizeof(out->status));
@@ -496,7 +497,7 @@ void loop() {
             ble_send_ack();
         } else if (parsed == PARSE_USAGE) {
             int g_before = usage_rate_group();
-            bool session_reset = usage_rate_sample(usage.session_pct);
+            bool session_reset = usage.has_session && usage_rate_sample(usage.session_pct);
             int g_after = usage_rate_group();
             // 5-hour session limit refilled → chime so the user knows they can
             // use Claude again (no-op on boards without a buzzer). Gated on the
