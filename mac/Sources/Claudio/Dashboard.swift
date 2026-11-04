@@ -53,7 +53,7 @@ extension Dashboard {
     /// Made-up numbers for `--render`, so screenshots never show real projects.
     static var sample: Dashboard {
         let d = Dashboard()
-        d.usage = Usage(session: 34, sessionReset: 168, weekly: 82, weeklyReset: 5_400, plan: "Max 5x")
+        d.usage = Usage(session: 34, sessionReset: 168, weekly: 82, weeklyReset: 5_400, plan: "Max")
         d.sessions = [
             .init(id: "1", state: "a", project: "claudio", title: "Fix the touch axis", branch: "main",
                   doing: "Needs your input", minutes: 0),

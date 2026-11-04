@@ -92,7 +92,8 @@ private func token(_ dir: URL, keychain: String? = nil) -> String? {
     func blob(_ o: [String: Any]) -> String {
         String(decoding: try! JSONSerialization.data(withJSONObject: ["claudeAiOauth": o]), as: UTF8.self)
     }
-    #expect(Credentials.planLabel(blob(["subscriptionType": "max", "rateLimitTier": "default_claude_max_20x"])) == "Max 20x")
+    #expect(Credentials.planLabel(blob(["subscriptionType": "max", "rateLimitTier": "default_claude_max_20x"])) == "Ultra")
+    #expect(Credentials.planLabel(blob(["subscriptionType": "max", "rateLimitTier": "default_claude_max_5x"])) == "Max")
     #expect(Credentials.planLabel(blob(["subscriptionType": "pro", "rateLimitTier": "default_claude_ai"])) == "Pro")
     #expect(Credentials.planLabel(blob([:])) == nil)
     #expect(Credentials.planLabel("not json") == nil)

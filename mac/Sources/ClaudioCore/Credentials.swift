@@ -47,14 +47,18 @@ public enum Credentials {
         return nil
     }
 
-    /// The subscription as the device shows it, e.g. "Max 20x".
+    /// Anthropic renamed the Max tiers on 2026-10-30, but the credentials
+    /// still carry the old tier ids.
+    static let planNames = ["Max 5x": "Max", "Max 20x": "Ultra"]
+
+    /// The subscription as the device shows it, e.g. "Ultra".
     public static func planLabel(_ blob: String?) -> String? {
         guard let data = try? JSONSerialization.jsonObject(with: Data((blob ?? "").utf8)) as? [String: Any],
               let oauth = data["claudeAiOauth"] as? [String: Any],
               let sub = oauth["subscriptionType"] as? String, !sub.isEmpty else { return nil }
-        let label = sub.prefix(1).uppercased() + sub.dropFirst().lowercased()
-        guard let tier = (oauth["rateLimitTier"] as? String)?.firstMatch(of: #/_(\d+x)$/#) else { return label }
-        return "\(label) \(tier.1)"
+        var label = sub.prefix(1).uppercased() + sub.dropFirst().lowercased()
+        if let tier = (oauth["rateLimitTier"] as? String)?.firstMatch(of: #/_(\d+x)$/#) { label += " \(tier.1)" }
+        return planNames[label] ?? label
     }
 
     /// `security -w` prints the secret as hex when its bytes aren't cleanly
