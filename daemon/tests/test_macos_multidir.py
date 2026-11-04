@@ -206,7 +206,8 @@ def test_discover_target_non_darwin_returns_none_without_pin(monkeypatch):
 
 def test_plan_label():
     blob = lambda o: json.dumps({"claudeAiOauth": o})
-    assert mod.plan_label(blob({"subscriptionType": "max", "rateLimitTier": "default_claude_max_20x"})) == "Max 20x"
+    assert mod.plan_label(blob({"subscriptionType": "max", "rateLimitTier": "default_claude_max_20x"})) == "Ultra"
+    assert mod.plan_label(blob({"subscriptionType": "max", "rateLimitTier": "default_claude_max_5x"})) == "Max"
     assert mod.plan_label(blob({"subscriptionType": "pro", "rateLimitTier": "default_claude_ai"})) == "Pro"
     assert mod.plan_label(blob({})) is None
     assert mod.plan_label("not json") is None

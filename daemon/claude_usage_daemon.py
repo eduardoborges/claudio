@@ -218,8 +218,13 @@ def read_token_for(config_dir: Path) -> str | None:
     return _extract_access_token(blob) if blob else None
 
 
+# Anthropic renamed the Max tiers on 2026-10-30, but the credentials still
+# carry the old tier ids.
+PLAN_NAMES = {"Max 5x": "Max", "Max 20x": "Ultra"}
+
+
 def plan_label(blob: str | None) -> str | None:
-    """The subscription as the device shows it, e.g. "Max 20x", or None."""
+    """The subscription as the device shows it, e.g. "Ultra", or None."""
     try:
         oauth = json.loads(blob or "").get("claudeAiOauth") or {}
     except (json.JSONDecodeError, AttributeError):
@@ -228,7 +233,8 @@ def plan_label(blob: str | None) -> str | None:
     if not isinstance(sub, str) or not sub:
         return None
     m = re.search(r"_(\d+x)$", oauth.get("rateLimitTier") or "")
-    return sub.capitalize() + (f" {m.group(1)}" if m else "")
+    label = sub.capitalize() + (f" {m.group(1)}" if m else "")
+    return PLAN_NAMES.get(label, label)
 
 
 def load_cached_address() -> str | None:
