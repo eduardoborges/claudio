@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/eduardoborges/claudio/compare/v0.4.0...v0.5.0) (2026-11-04)
+
+
+### Features
+
+* **ui:** show "No limit" when the plan has no 5-hour window ([6a21e61](https://github.com/eduardoborges/claudio/commit/6a21e61c3ee0090630338b876d5d40f04da87711))
+
+
+### Bug Fixes
+
+* **daemon:** read the weekly limit when the plan has no 5-hour window ([023698d](https://github.com/eduardoborges/claudio/commit/023698d217e59b03d11bda7f63bf574ea5668f82))
+* **daemon:** show the renamed Max plans as Max and Ultra ([7ef6d76](https://github.com/eduardoborges/claudio/commit/7ef6d769e5f31e208139cef07e979e4fcdd5925b))
+* **mac:** read the weekly limit when the plan has no 5-hour window ([67675b4](https://github.com/eduardoborges/claudio/commit/67675b469baecf521bc3268632dadc1fe0fdfc64))
+* **mac:** show the renamed Max plans as Max and Ultra ([b8f0c6e](https://github.com/eduardoborges/claudio/commit/b8f0c6eaa04b482a5aa520c1ecdc9498a493c083))
+* **ui:** put the Weekly label back after an Enterprise reading ([e229ee5](https://github.com/eduardoborges/claudio/commit/e229ee56603f8d6e2c8aebcd2bffe5ed0ace8ed6))
+
 ## [0.4.0](https://github.com/eduardoborges/claudio/compare/v0.3.0...v0.4.0) (2026-10-29)
 
 
