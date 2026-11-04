@@ -113,6 +113,9 @@ private struct UsagePanel: View {
                 if usage.enterprise {
                     UsageBar(label: "Spend", pct: usage.session, note: "Resets \(usage.resetsOn ?? "monthly")")
                     UsageBar(label: "Period", pct: usage.periodElapsed ?? 0, note: "Of the month gone")
+                } else if !usage.hasSession {
+                    UsageBar(label: "5-hour", pct: 0, note: "Weekly limit only", value: "No limit")
+                    UsageBar(label: "Weekly", pct: usage.weekly, note: "Resets in \(duration(usage.weeklyReset))")
                 } else {
                     UsageBar(label: "5-hour", pct: usage.session, note: "Resets in \(duration(usage.sessionReset))")
                     UsageBar(label: "Weekly", pct: usage.weekly, note: "Resets in \(duration(usage.weeklyReset))")
@@ -134,11 +137,12 @@ private struct UsageBar: View {
     let label: String
     let pct: Int?   // nil shows a placeholder while the first reading loads
     let note: String
+    var value: String? = nil   // shown in place of the percentage
 
     var body: some View {
         Platter {
             Text(label).font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
-            Text("\(pct ?? 0)%")
+            Text(value ?? "\(pct ?? 0)%")
                 .font(.title2.weight(.semibold)).monospacedDigit()
                 .redacted(reason: pct == nil ? .placeholder : [])
             // ProgressView turns gray whenever its window isn't key.

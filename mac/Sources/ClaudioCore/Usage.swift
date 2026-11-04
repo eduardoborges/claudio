@@ -38,7 +38,8 @@ public enum Usage {
         if status == 401 || status == 403 { return .tokenExpired }
         let p = "anthropic-ratelimit-unified-"
         // At the usage limit the API answers 429 but still sends the quota headers.
-        let atLimit = status == 429 && (headers[p + "5h-utilization"] != nil || headers[p + "overage-utilization"] != nil)
+        let atLimit = status == 429 && (headers[p + "5h-utilization"] != nil || headers[p + "7d-utilization"] != nil
+                                        || headers[p + "overage-utilization"] != nil)
         if status >= 400 && !atLimit { return .failed }
         func header(_ name: String, _ fallback: String = "0") -> String { headers[p + name] ?? fallback }
         func pct(_ util: String) -> Int {
@@ -50,12 +51,19 @@ public enum Usage {
             let mins = (r - now) / 60
             return mins > 0 ? Int(mins.rounded(.toNearestOrEven)) : 0
         }
-        // Pro and Max report 5-hour and weekly windows; Enterprise reports one
-        // spending limit as overage.
+        // Pro and Max report 5-hour and weekly windows. A verified Ultra account
+        // has no 5-hour limit and reports only the weekly one. Enterprise
+        // reports one spending limit as overage.
         if let five = headers[p + "5h-utilization"], !five.isEmpty {
             return .payload([("s", .int(pct(five))), ("sr", .int(resetMinutes(header("5h-reset")))),
                              ("w", .int(pct(header("7d-utilization")))), ("wr", .int(resetMinutes(header("7d-reset")))),
                              ("st", .string(header("5h-status", "unknown"))), ("acct", .string("pro")), ("ok", .bool(true))])
+        }
+        if let week = headers[p + "7d-utilization"], !week.isEmpty {
+            return .payload([("s", .int(0)), ("sr", .int(-1)),
+                             ("w", .int(pct(week))), ("wr", .int(resetMinutes(header("7d-reset")))),
+                             ("st", .string(header("status", "unknown"))), ("acct", .string("pro")),
+                             ("hs", .bool(false)), ("ok", .bool(true))])
         }
         let reset = header("overage-reset")
         return .payload([("s", .int(pct(header("overage-utilization")))), ("sr", .int(resetMinutes(reset))),
@@ -123,7 +131,9 @@ public enum Usage {
                 anyLive = true
                 if let plan = Credentials.planLabel(creds) { payload.append(("pl", .string(plan))) }
                 payloads[dir] = payload
-                if case .int(let s) = payload.first(where: { $0.0 == "s" })?.1 { sessions.append((dir, s)) }
+                // Without a 5-hour window, the weekly % is what rises when the plan is used.
+                let key = payload.contains { $0.0 == "hs" && $0.1 == .bool(false) } ? "w" : "s"
+                if case .int(let s) = payload.first(where: { $0.0 == key })?.1 { sessions.append((dir, s)) }
             }
         }
         guard !sessions.isEmpty else { return (nil, !anyLive) }

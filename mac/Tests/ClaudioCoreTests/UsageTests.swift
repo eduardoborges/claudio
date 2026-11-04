@@ -34,6 +34,17 @@ private let p = "anthropic-ratelimit-unified-"
     #expect(JSON.object(pairs).encoded == #"{"s":34,"sr":0,"w":0,"wr":0,"st":"unknown","acct":"pro","ok":true}"#)
 }
 
+@Test func ultraHasOnlyTheWeeklyWindow() {
+    let now = 1_800_000_000.0
+    for status in [200, 429] {
+        guard case .payload(let pairs) = Usage.parse(status: status, headers: [
+            p + "7d-utilization": "0.06", p + "7d-reset": String(Int(now + 86400)), p + "status": "allowed",
+        ], now: now) else { Issue.record("expected payload"); return }
+        #expect(JSON.object(pairs).encoded ==
+                #"{"s":0,"sr":-1,"w":6,"wr":1440,"st":"allowed","acct":"pro","hs":false,"ok":true}"#)
+    }
+}
+
 @Test func enterpriseReadsTheBillingPeriod() {
     let calendar = Calendar(identifier: .gregorian)
     let end = calendar.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 10))!
@@ -134,4 +145,19 @@ private let a = URL(fileURLWithPath: "/a"), b = URL(fileURLWithPath: "/b")
     #expect(got.payload == nil && got.allDead)
     got = await Usage.pollActive(dirs: [a, b], selector: PlanSelector(), blob: { blobs[$0] }, poll: poll(["tA": 12, "tB": 40]))
     #expect(JSON.object(got.payload!).encoded == #"{"s":40,"ok":true}"#)   // startup: highest %
+}
+
+@Test func pollActiveFollowsTheWeeklyWithoutASession() async {
+    let blobs = [a: #"{"accessToken":"tA"}"#, b: #"{"accessToken":"tB"}"#]
+    var weekly = 10
+    let selector = PlanSelector()
+    func poll(_ token: String) async -> Usage.Outcome {
+        token == "tA" ? .payload([("s", .int(0)), ("w", .int(weekly)), ("hs", .bool(false))])
+                      : .payload([("s", .int(30))])
+    }
+    var got = await Usage.pollActive(dirs: [a, b], selector: selector, blob: { blobs[$0] }, poll: poll)
+    #expect(JSON.object(got.payload!).encoded == #"{"s":30}"#)   // startup: B is higher
+    weekly = 11
+    got = await Usage.pollActive(dirs: [a, b], selector: selector, blob: { blobs[$0] }, poll: poll)
+    #expect(got.payload?.contains { $0.0 == "hs" } == true)       // A's weekly rose
 }

@@ -10,6 +10,7 @@ final class Dashboard {
     struct Usage {
         var session: Int
         var sessionReset: Int   // minutes
+        var hasSession = true   // false on Ultra, which has no 5-hour limit
         var weekly: Int
         var weeklyReset: Int
         var plan: String?
@@ -19,14 +20,16 @@ final class Dashboard {
 
         /// Reads the payload the daemon sends to the device.
         init?(_ payload: [(String, JSON)]) {
-            var ints: [String: Int] = [:], strings: [String: String] = [:]
+            var ints: [String: Int] = [:], strings: [String: String] = [:], bools: [String: Bool] = [:]
             for (key, value) in payload {
                 if case .int(let i) = value { ints[key] = i }
                 if case .string(let s) = value { strings[key] = s }
+                if case .bool(let b) = value { bools[key] = b }
             }
             guard let s = ints["s"] else { return nil }
             session = s
             sessionReset = ints["sr"] ?? 0
+            hasSession = bools["hs"] ?? true
             weekly = ints["w"] ?? 0
             weeklyReset = ints["wr"] ?? 0
             plan = strings["pl"]
